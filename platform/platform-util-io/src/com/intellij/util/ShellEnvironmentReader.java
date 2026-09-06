@@ -9,8 +9,9 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.Cancellation;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.system.LowLevelLocalMachineAccess;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
@@ -36,6 +37,8 @@ import java.util.concurrent.TimeUnit;
 @ApiStatus.Experimental
 @LowLevelLocalMachineAccess
 public final class ShellEnvironmentReader {
+  private static final long ALLOWED_TIMEOUT_THRESHOLD = 10;
+
   private static final Logger LOG = Logger.getInstance(ShellEnvironmentReader.class);
 
   private static final String OUTPUT_PLACEHOLDER = "__OUTPUT_PLACEHOLDER__";
@@ -205,10 +208,16 @@ public final class ShellEnvironmentReader {
 
   /// Runs the given command.
   /// Returns the loaded environment and the command output (stdout/stderr combined).
+  @RequiresBackgroundThread(generateAssertion = false)
+  @RequiresReadLockAbsence(generateAssertion = false)
   public static @NotNull Pair<@NotNull Map<String, String>, @NotNull String> readEnvironment(
     @NotNull ProcessBuilder command,
     long timeoutMillis
   ) throws IOException {
+    if (timeoutMillis > ALLOWED_TIMEOUT_THRESHOLD) { // same as OSProcessHandler.ALLOWED_TIMEOUT_THRESHOLD
+      SlowOperations.assertNonCancelableSlowOperationsAreAllowed();
+    }
+
     if (timeoutMillis <= 0) timeoutMillis = DEFAULT_TIMEOUT_MILLIS;
 
     var tmpDir = Files.createDirectories(Path.of(System.getProperty("java.io.tmpdir")));

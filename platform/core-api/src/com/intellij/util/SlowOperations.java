@@ -161,7 +161,7 @@ public final class SlowOperations {
   /// Common solutions include:
   ///   - [com.intellij.openapi.vfs.DiskQueryRelay] to simulate cancellable IO from read action
   ///   - [com.intellij.openapi.progress.util.ProgressIndicatorUtils#awaitWithCheckCanceled(Future)] to wait for Future interruptibly
-  ///   - [com.intellij.openapi.progress.util.UtilKt#runWithCheckCanceled(CoroutineContext , Function2)] to run suspend computation as a detached activity
+  ///   - [com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore#runWithCheckCanceled(CoroutineContext , Function2)] to run suspend computation as a detached activity
   ///   - [com.intellij.codeInsight.daemon.DaemonCodeAnalyzer#restart(Object)] to restart highlighting in files after heavy computation is finished
   ///   - [com.intellij.lang.annotation.ExternalAnnotator] to perform highlighting with an external process
   ///
